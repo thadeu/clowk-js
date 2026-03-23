@@ -7,7 +7,7 @@ import { SubdomainResource } from '../../src/sdk/subdomain'
 import { TokenResource } from '../../src/sdk/token'
 import { configure, resetConfig } from '../../src/config'
 
-const BASE_URL = 'https://api.clowk.dev/client/v1'
+const BASE_URL = 'https://api.clowk.dev/api/v1'
 
 describe('ClowkClient', () => {
   beforeEach(() => {
@@ -41,7 +41,7 @@ describe('ClowkClient', () => {
   })
 
   it('uses config defaults', () => {
-    configure({ secretKey: 'sk_test_123', publishableKey: 'pk_test_456' })
+    configure({ secretKey: 'sk_test_123', publishableKey: 'pk_test_456', subdomainUrl: 'https://api.clowk.dev' })
 
     const scope = nock(BASE_URL, {
       reqheaders: {
@@ -75,7 +75,7 @@ describe('ClowkClient', () => {
       .get('/users')
       .reply(200, {})
 
-    const client = new ClowkClient({ secretKey: 'sk_override' })
+    const client = new ClowkClient({ secretKey: 'sk_override', apiBaseUrl: BASE_URL })
     client.get('users')
 
     return new Promise<void>((resolve) => {
@@ -89,7 +89,7 @@ describe('ClowkClient', () => {
   it('delegates HTTP get', async () => {
     nock(BASE_URL).get('/custom/endpoint').reply(200, { ok: true })
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.get('custom/endpoint')
 
     expect(response.status).toBe(200)
@@ -100,7 +100,7 @@ describe('ClowkClient', () => {
       .post('/custom/endpoint', { key: 'value' })
       .reply(201, { created: true })
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.post('custom/endpoint', { key: 'value' })
 
     expect(response.status).toBe(201)
@@ -111,7 +111,7 @@ describe('ClowkClient', () => {
       .put('/custom/endpoint', { key: 'value' })
       .reply(200, {})
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.put('custom/endpoint', { key: 'value' })
 
     expect(response.status).toBe(200)
@@ -122,7 +122,7 @@ describe('ClowkClient', () => {
       .patch('/custom/endpoint', { key: 'value' })
       .reply(200, {})
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.patch('custom/endpoint', { key: 'value' })
 
     expect(response.status).toBe(200)
@@ -131,7 +131,7 @@ describe('ClowkClient', () => {
   it('delegates HTTP delete', async () => {
     nock(BASE_URL).delete('/custom/endpoint').reply(204, '')
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.delete('custom/endpoint')
 
     expect(response.status).toBe(204)
@@ -140,7 +140,7 @@ describe('ClowkClient', () => {
   it('delegates HTTP head', async () => {
     nock(BASE_URL).head('/custom/endpoint').reply(200, '')
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.head('custom/endpoint')
 
     expect(response.status).toBe(200)
@@ -149,7 +149,7 @@ describe('ClowkClient', () => {
   it('delegates HTTP options', async () => {
     nock(BASE_URL).options('/custom/endpoint').reply(200, '')
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.options('custom/endpoint')
 
     expect(response.status).toBe(200)

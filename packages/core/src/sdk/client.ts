@@ -14,15 +14,14 @@ export class ClowkClient {
   private _tokens?: TokenResource
   private _http?: HttpClient
 
-  private readonly apiBaseUrl: string
+  private readonly apiBaseUrl: string | null
   private readonly secretKey: string | null
   private readonly publishableKey: string | null
 
   constructor(options: ClowkClientOptions = {}) {
-    const config = getConfig()
-    this.apiBaseUrl = options.apiBaseUrl ?? config.apiBaseUrl
-    this.secretKey = options.secretKey ?? config.secretKey
-    this.publishableKey = options.publishableKey ?? config.publishableKey
+    this.apiBaseUrl = options.apiBaseUrl ?? this.deriveApiBaseUrl()
+    this.secretKey = options.secretKey ?? getConfig().secretKey
+    this.publishableKey = options.publishableKey ?? getConfig().publishableKey
   }
 
   get users(): UserResource {
@@ -67,6 +66,13 @@ export class ClowkClient {
 
   async options(path: string, headers?: Record<string, string>): Promise<ClowkResponse> {
     return this.http.options(path, headers)
+  }
+
+  private deriveApiBaseUrl(): string | null {
+    const subdomainUrl = getConfig().subdomainUrl
+    if (!subdomainUrl) return null
+
+    return `${subdomainUrl.replace(/\/$/, '')}/api/v1`
   }
 
   private get http(): HttpClient {

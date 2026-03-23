@@ -2,7 +2,6 @@ import type { ClowkConfig } from './types'
 
 function createDefaultConfig(): ClowkConfig {
   return {
-    apiBaseUrl: 'https://api.clowk.dev/client/v1',
     appBaseUrl: 'https://app.clowk.in',
     secretKey: null,
     publishableKey: null,

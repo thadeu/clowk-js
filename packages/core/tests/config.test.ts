@@ -9,7 +9,6 @@ describe('Configuration', () => {
   it('has correct defaults', () => {
     const config = getConfig()
 
-    expect(config.apiBaseUrl).toBe('https://api.clowk.dev/client/v1')
     expect(config.appBaseUrl).toBe('https://app.clowk.in')
     expect(config.secretKey).toBeNull()
     expect(config.publishableKey).toBeNull()
@@ -41,8 +40,6 @@ describe('Configuration', () => {
     expect(config.secretKey).toBe('sk_test_123')
     expect(config.publishableKey).toBe('pk_test_456')
     expect(config.httpOpenTimeout).toBe(15)
-    // unset fields keep defaults
-    expect(config.apiBaseUrl).toBe('https://api.clowk.dev/client/v1')
   })
 
   it('resetConfig() restores defaults', () => {

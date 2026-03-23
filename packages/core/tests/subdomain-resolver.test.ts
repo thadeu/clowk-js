@@ -4,7 +4,7 @@ import { SubdomainResolver } from '../src/subdomain-resolver'
 import { ConfigurationError } from '../src/errors'
 import { configure, resetConfig } from '../src/config'
 
-const BASE_URL = 'https://api.clowk.dev/client/v1'
+const BASE_URL = 'https://api.clowk.dev/api/v1'
 
 describe('SubdomainResolver', () => {
   beforeEach(() => {

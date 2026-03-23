@@ -4,7 +4,7 @@ import { ClowkClient } from '../../src/sdk/client'
 import { SubdomainResource } from '../../src/sdk/subdomain'
 import { resetConfig } from '../../src/config'
 
-const BASE_URL = 'https://api.clowk.dev/client/v1'
+const BASE_URL = 'https://api.clowk.dev/api/v1'
 
 describe('SubdomainResource', () => {
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe('SubdomainResource', () => {
         instance: { url: 'https://myapp.clowk.dev' },
       })
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.subdomains.findByPk('pk_test_123')
 
     expect(response.status).toBe(200)

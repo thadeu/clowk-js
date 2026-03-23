@@ -28,8 +28,15 @@ export type HttpHandler = (env: HttpEnv) => Promise<HttpResponseData>
 
 export type HttpMiddleware = (next: HttpHandler) => HttpHandler
 
+export type ClowkResourceType = 'user' | 'token' | 'instance'
+
+export interface ClowkItem<T extends Record<string, unknown> = Record<string, unknown>> {
+  id: string
+  resource: ClowkResourceType
+  data: T
+}
+
 export interface ClowkConfig {
-  apiBaseUrl: string
   appBaseUrl: string
   secretKey: string | null
   publishableKey: string | null
@@ -50,7 +57,9 @@ export interface ClowkConfig {
   httpLogger: Logger | null
 }
 
-export type ClowkClientOptions = Partial<Pick<ClowkConfig, 'apiBaseUrl' | 'secretKey' | 'publishableKey'>>
+export type ClowkClientOptions = Partial<Pick<ClowkConfig, 'secretKey' | 'publishableKey'>> & {
+  apiBaseUrl?: string | null
+}
 
 export interface JwtPayload {
   iss?: string
