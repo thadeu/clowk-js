@@ -27,6 +27,9 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@clowk/core": "workspace:*"
   },
