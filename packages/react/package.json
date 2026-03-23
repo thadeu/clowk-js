@@ -1,6 +1,6 @@
 {
   "name": "@clowk/react",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "React components and hooks for Clowk authentication",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,7 +18,9 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",

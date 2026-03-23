@@ -1,6 +1,6 @@
 {
   "name": "@clowk/sdk",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Clowk SDK for JavaScript/TypeScript — authentication broker client",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -18,7 +18,9 @@
       }
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
