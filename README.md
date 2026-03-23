@@ -1,5 +1,14 @@
 # Clowk
 
+[![CI](https://github.com/thadeu/clowk-js/actions/workflows/ci.yml/badge.svg)](https://github.com/thadeu/clowk-js/actions/workflows/ci.yml)
+[![npm @clowk/core](https://img.shields.io/npm/v/@clowk/core?label=%40clowk%2Fcore)](https://www.npmjs.com/package/@clowk/core)
+[![npm @clowk/sdk](https://img.shields.io/npm/v/@clowk/sdk?label=%40clowk%2Fsdk)](https://www.npmjs.com/package/@clowk/sdk)
+[![npm @clowk/react](https://img.shields.io/npm/v/@clowk/react?label=%40clowk%2Freact)](https://www.npmjs.com/package/@clowk/react)
+[![npm @clowk/express](https://img.shields.io/npm/v/@clowk/express?label=%40clowk%2Fexpress)](https://www.npmjs.com/package/@clowk/express)
+[![npm @clowk/hono](https://img.shields.io/npm/v/@clowk/hono?label=%40clowk%2Fhono)](https://www.npmjs.com/package/@clowk/hono)
+[![npm @clowk/nextjs](https://img.shields.io/npm/v/@clowk/nextjs?label=%40clowk%2Fnextjs)](https://www.npmjs.com/package/@clowk/nextjs)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Monorepo of JavaScript/TypeScript SDKs for [Clowk](https://clowk.in) **authentication broker**.
 
 ## Broker, not a provider
