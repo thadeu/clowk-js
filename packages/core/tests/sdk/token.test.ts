@@ -4,7 +4,7 @@ import { ClowkClient } from '../../src/sdk/client'
 import { TokenResource } from '../../src/sdk/token'
 import { resetConfig } from '../../src/config'
 
-const BASE_URL = 'https://api.clowk.dev/client/v1'
+const BASE_URL = 'https://api.clowk.dev/api/v1'
 
 describe('TokenResource', () => {
   beforeEach(() => {
@@ -25,7 +25,7 @@ describe('TokenResource', () => {
       .post('/tokens/verify', { token: 'jwt_token_here' })
       .reply(200, { valid: true, sub: 'user_123' })
 
-    const client = new ClowkClient()
+    const client = new ClowkClient({ apiBaseUrl: BASE_URL })
     const response = await client.tokens.verify('jwt_token_here')
 
     expect(response.status).toBe(200)

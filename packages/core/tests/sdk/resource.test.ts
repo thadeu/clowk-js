@@ -3,7 +3,7 @@ import nock from 'nock'
 import { ClowkClient } from '../../src/sdk/client'
 import { resetConfig } from '../../src/config'
 
-const BASE_URL = 'https://api.clowk.dev/client/v1'
+const BASE_URL = 'https://api.clowk.dev/api/v1'
 
 describe('Resource (via UserResource)', () => {
   let client: ClowkClient
@@ -11,7 +11,7 @@ describe('Resource (via UserResource)', () => {
   beforeEach(() => {
     resetConfig()
     nock.cleanAll()
-    client = new ClowkClient()
+    client = new ClowkClient({ apiBaseUrl: BASE_URL })
   })
 
   afterEach(() => {
