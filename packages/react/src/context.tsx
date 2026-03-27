@@ -1,11 +1,12 @@
 import { createContext } from 'react'
-import type { JwtPayload } from '@clowk/core'
+import type { JwtPayload, SessionInfo } from '@clowk/core'
 
 export interface ClowkAuthState {
   user: JwtPayload | null
   token: string | null
   signedIn: boolean
   isLoading: boolean
+  session: SessionInfo | null
   signOut: () => void
 }
 

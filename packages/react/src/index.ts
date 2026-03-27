@@ -9,6 +9,7 @@ export type { ClowkAuthState } from './context'
 // Hooks
 export { useAuth } from './hooks/use-auth'
 export { useClowk } from './hooks/use-clowk'
+export { useSession } from './hooks/use-session'
 export { useToken } from './hooks/use-token'
 
 // Components

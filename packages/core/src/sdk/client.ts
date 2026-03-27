@@ -4,12 +4,14 @@ import { HttpClient } from '../http/client'
 import { ClowkResponse } from '../http/response'
 import { UserResource } from './user'
 import { SessionResource } from './session'
+import { SessionConfigResource } from './session-config'
 import { SubdomainResource } from './subdomain'
 import { TokenResource } from './token'
 
 export class ClowkClient {
   private _users?: UserResource
   private _sessions?: SessionResource
+  private _sessionConfig?: SessionConfigResource
   private _subdomains?: SubdomainResource
   private _tokens?: TokenResource
   private _http?: HttpClient
@@ -30,6 +32,10 @@ export class ClowkClient {
 
   get sessions(): SessionResource {
     return (this._sessions ??= new SessionResource(this))
+  }
+
+  get sessionConfig(): SessionConfigResource {
+    return (this._sessionConfig ??= new SessionConfigResource(this))
   }
 
   get subdomains(): SubdomainResource {
@@ -84,7 +90,7 @@ export class ClowkClient {
       if (this.publishableKey) headers['X-Clowk-Publishable-Key'] = this.publishableKey
 
       this._http = new HttpClient({
-        baseUrl: this.apiBaseUrl,
+        baseUrl: this.apiBaseUrl!,
         headers,
         logger: config.httpLogger,
         openTimeout: config.httpOpenTimeout,

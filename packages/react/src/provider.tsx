@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
-import { JwtVerifier, SubdomainResolver, getConfig, configure } from '@clowk/core'
-import type { JwtPayload } from '@clowk/core'
+import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
+import { JwtVerifier, ClowkClient, getConfig, configure } from '@clowk/core'
+import type { JwtPayload, SessionInfo } from '@clowk/core'
 import { ClowkContext, type ClowkAuthState } from './context'
 
 export interface ClowkProviderProps {
@@ -9,6 +9,8 @@ export interface ClowkProviderProps {
   secretKey?: string
   tokenParam?: string
   afterSignOutPath?: string
+  sessionCheckInterval?: number
+  onSessionExpired?: (session: SessionInfo) => void
 }
 
 export function ClowkProvider({
@@ -17,23 +19,25 @@ export function ClowkProvider({
   secretKey,
   tokenParam,
   afterSignOutPath,
+  sessionCheckInterval = 0,
+  onSessionExpired,
 }: ClowkProviderProps) {
   const [user, setUser] = useState<JwtPayload | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [session, setSession] = useState<SessionInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const prevStatusRef = useRef<string | null>(null)
 
   const config = getConfig()
   const paramName = tokenParam ?? config.tokenParam
   const signOutPath = afterSignOutPath ?? config.afterSignOutPath
 
-  // Apply publishableKey to global config if provided
   useEffect(() => {
     if (publishableKey) {
       configure({ publishableKey })
     }
   }, [publishableKey])
 
-  // Extract token from URL on mount
   useEffect(() => {
     const extractAndVerify = async () => {
       try {
@@ -41,20 +45,20 @@ export function ClowkProvider({
         const urlToken = url.searchParams.get(paramName)
 
         if (urlToken) {
-          // Remove token from URL without reload
           url.searchParams.delete(paramName)
           window.history.replaceState({}, '', url.toString())
 
-          // Verify if secretKey available, otherwise trust the token
           if (secretKey) {
             const verifier = new JwtVerifier({ secretKey })
             const payload = await verifier.verify(urlToken)
+
             setUser(payload)
           } else {
-            // Decode without verification (client-side, no secret)
             const payloadB64 = urlToken.split('.')[1]
+
             if (payloadB64) {
               const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
+
               setUser(JSON.parse(json))
             }
           }
@@ -62,7 +66,6 @@ export function ClowkProvider({
           setToken(urlToken)
         }
       } catch {
-        // Token invalid or expired — clear state
         setUser(null)
         setToken(null)
       } finally {
@@ -73,11 +76,39 @@ export function ClowkProvider({
     extractAndVerify()
   }, [paramName, secretKey])
 
+  useEffect(() => {
+    if (!token || !secretKey || sessionCheckInterval <= 0) return
+
+    const client = new ClowkClient({ secretKey, publishableKey })
+
+    const checkSession = async () => {
+      try {
+        const result = await client.tokens.verifyWithSession(token)
+        const newSession = result.session ?? null
+
+        setSession(newSession)
+
+        if (newSession && newSession.status !== 'active' && prevStatusRef.current === 'active') {
+          onSessionExpired?.(newSession)
+        }
+
+        prevStatusRef.current = newSession?.status ?? null
+      } catch {
+        setSession(null)
+      }
+    }
+
+    checkSession()
+    const interval = setInterval(checkSession, sessionCheckInterval * 1000)
+
+    return () => clearInterval(interval)
+  }, [token, secretKey, publishableKey, sessionCheckInterval, onSessionExpired])
+
   const signOut = useCallback(() => {
     setUser(null)
     setToken(null)
+    setSession(null)
 
-    // Clear cookie
     document.cookie = `${config.cookieKey}=; Max-Age=0; Path=/; SameSite=Lax`
 
     if (signOutPath) {
@@ -91,9 +122,10 @@ export function ClowkProvider({
       token,
       signedIn: user !== null,
       isLoading,
+      session,
       signOut,
     }),
-    [user, token, isLoading, signOut],
+    [user, token, isLoading, session, signOut],
   )
 
   return <ClowkContext.Provider value={value}>{children}</ClowkContext.Provider>

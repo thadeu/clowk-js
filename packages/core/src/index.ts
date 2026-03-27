@@ -24,6 +24,7 @@ export { ClowkClient } from './sdk/client'
 export { Resource } from './sdk/resource'
 export { UserResource } from './sdk/user'
 export { SessionResource } from './sdk/session'
+export { SessionConfigResource } from './sdk/session-config'
 export { SubdomainResource } from './sdk/subdomain'
 export { TokenResource } from './sdk/token'
 
@@ -43,7 +44,11 @@ export type {
   HttpResponseData,
   JwtPayload,
   Logger,
+  SessionConfig,
+  SessionInfo,
+  SessionStatus,
   TokenRequest,
+  VerifyResult,
 } from './types'
 
 // Convenience namespace

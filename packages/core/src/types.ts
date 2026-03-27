@@ -66,6 +66,7 @@ export interface JwtPayload {
   exp?: number
   iat?: number
   sub?: string
+  session_id?: string
   [key: string]: unknown
 }
 
@@ -73,4 +74,31 @@ export interface TokenRequest {
   params?: Record<string, string>
   headers?: Record<string, string> | { get(name: string): string | null }
   cookies?: Record<string, string>
+}
+
+export type SessionStatus = 'active' | 'revoked' | 'expired' | 'not_found' | 'unknown'
+
+export interface SessionInfo {
+  status: SessionStatus
+  sessionId?: string
+  reason?: 'lifetime' | 'idle'
+  revokedAt?: string
+  loggedInAt?: string
+  lastActivityAt?: string
+}
+
+export interface SessionConfig {
+  sessionLifetimeHours: number
+  sessionIdleTimeoutMinutes: number | null
+  singleSessionPerDevice: boolean
+  maxConcurrentSessions: number
+}
+
+export interface VerifyResult {
+  valid: boolean
+  email: string
+  name: string
+  avatarUrl?: string
+  provider?: string
+  session?: SessionInfo
 }
