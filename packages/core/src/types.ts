@@ -28,6 +28,24 @@ export type HttpHandler = (env: HttpEnv) => Promise<HttpResponseData>
 
 export type HttpMiddleware = (next: HttpHandler) => HttpHandler
 
+export interface TokenPair {
+  accessToken: string
+  refreshToken: string | null
+  expiresIn: number | null
+  sessionId: string | null
+}
+
+/**
+ * Where the refresh token lives between page loads. Synchronous and tiny on
+ * purpose, so `localStorage` satisfies it directly and a native shell can back
+ * it with the Keychain.
+ */
+export interface TokenStorage {
+  get(key: string): string | null
+  set(key: string, value: string): void
+  remove(key: string): void
+}
+
 export type ClowkResourceType = 'user' | 'token' | 'instance'
 
 export interface ClowkItem<T extends Record<string, unknown> = Record<string, unknown>> {

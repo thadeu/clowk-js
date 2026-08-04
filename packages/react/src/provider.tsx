@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type ReactNode } from 'react'
-import { JwtVerifier, ClowkClient, getConfig, configure } from '@clowk/core'
-import type { JwtPayload, SessionInfo } from '@clowk/core'
+import { ClowkClient, TokenManager, getConfig, configure } from '@clowk/core'
+import type { JwtPayload, SessionInfo, TokenStorage } from '@clowk/core'
 import { ClowkContext, type ClowkAuthState } from './context'
 
 export interface ClowkProviderProps {
@@ -11,6 +11,10 @@ export interface ClowkProviderProps {
   afterSignOutPath?: string
   sessionCheckInterval?: number
   onSessionExpired?: (session: SessionInfo) => void
+  /** Where the refresh token is kept. Defaults to `localStorage` in the browser. */
+  storage?: TokenStorage
+  /** Renew this many seconds before the access token expires. */
+  refreshSkew?: number
 }
 
 export function ClowkProvider({
@@ -21,6 +25,8 @@ export function ClowkProvider({
   afterSignOutPath,
   sessionCheckInterval = 0,
   onSessionExpired,
+  storage,
+  refreshSkew,
 }: ClowkProviderProps) {
   const [user, setUser] = useState<JwtPayload | null>(null)
   const [token, setToken] = useState<string | null>(null)
@@ -32,14 +38,26 @@ export function ClowkProvider({
   const paramName = tokenParam ?? config.tokenParam
   const signOutPath = afterSignOutPath ?? config.afterSignOutPath
 
-  useEffect(() => {
-    if (publishableKey) {
-      configure({ publishableKey })
-    }
-  }, [publishableKey])
+  if (publishableKey) configure({ publishableKey })
+
+  const manager = useMemo(
+    () =>
+      new TokenManager({
+        publishableKey: publishableKey ?? config.publishableKey,
+        storage,
+        refreshSkew,
+        onChange: (state) => {
+          setToken(state.token)
+          setUser(state.user)
+        },
+      }),
+    [publishableKey, config.publishableKey, storage, refreshSkew],
+  )
 
   useEffect(() => {
-    const extractAndVerify = async () => {
+    let cancelled = false
+
+    const bootstrap = async () => {
       try {
         const url = new URL(window.location.href)
         const urlToken = url.searchParams.get(paramName)
@@ -48,33 +66,28 @@ export function ClowkProvider({
           url.searchParams.delete(paramName)
           window.history.replaceState({}, '', url.toString())
 
-          if (secretKey) {
-            const verifier = new JwtVerifier({ secretKey })
-            const payload = await verifier.verify(urlToken)
-
-            setUser(payload)
-          } else {
-            const payloadB64 = urlToken.split('.')[1]
-
-            if (payloadB64) {
-              const json = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'))
-
-              setUser(JSON.parse(json))
-            }
-          }
-
-          setToken(urlToken)
+          await manager.exchange(urlToken)
+        } else {
+          // The access token lives in memory, so on a reload the only thing
+          // that can prove the user is still signed in is the stored refresh
+          // token. Skipping this is what made every reload a logout.
+          await manager.restore()
         }
       } catch {
-        setUser(null)
-        setToken(null)
+        manager.clear()
       } finally {
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false)
       }
     }
 
-    extractAndVerify()
-  }, [paramName, secretKey])
+    bootstrap()
+
+    return () => {
+      cancelled = true
+    }
+  }, [manager, paramName])
+
+  const getToken = useCallback(() => manager.getToken(), [manager])
 
   useEffect(() => {
     if (!token || !secretKey || sessionCheckInterval <= 0) return
@@ -105,16 +118,16 @@ export function ClowkProvider({
   }, [token, secretKey, publishableKey, sessionCheckInterval, onSessionExpired])
 
   const signOut = useCallback(() => {
-    setUser(null)
-    setToken(null)
     setSession(null)
 
-    document.cookie = `${config.cookieKey}=; Max-Age=0; Path=/; SameSite=Lax`
+    // Revoking server-side is what actually ends the session; clearing local
+    // state alone would leave a live refresh token behind.
+    void manager.signOut().finally(() => {
+      document.cookie = `${config.cookieKey}=; Max-Age=0; Path=/; SameSite=Lax`
 
-    if (signOutPath) {
-      window.location.href = signOutPath
-    }
-  }, [config.cookieKey, signOutPath])
+      if (signOutPath) window.location.href = signOutPath
+    })
+  }, [manager, config.cookieKey, signOutPath])
 
   const value = useMemo<ClowkAuthState>(
     () => ({
@@ -124,8 +137,9 @@ export function ClowkProvider({
       isLoading,
       session,
       signOut,
+      getToken,
     }),
-    [user, token, isLoading, session, signOut],
+    [user, token, isLoading, session, signOut, getToken],
   )
 
   return <ClowkContext.Provider value={value}>{children}</ClowkContext.Provider>

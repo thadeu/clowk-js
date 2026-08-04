@@ -14,7 +14,7 @@ Clowk is an authentication **broker**. The React package provides:
 
 1. **`<ClowkProvider>`** — wraps your app, captures the `?token=` callback, manages auth state
 2. **Redirect buttons** — `<SignInButton>` and `<SignUpButton>` redirect to your Clowk instance
-3. **Hooks** — `useAuth()`, `useClowk()`, `useToken()` for accessing auth state
+3. **Hooks** — `useAuth()`, `useGetToken()`, `useClowk()`, `useToken()` for accessing auth state
 4. **`<SignOutButton>`** — clears auth state and cookie
 
 ```
@@ -26,8 +26,15 @@ User authenticates (Google, GitHub, email, etc.)
     ↓
 Clowk redirects back to your app with ?token=eyJ...
     ↓
-<ClowkProvider> captures token, verifies it, provides user via context
+<ClowkProvider> exchanges it for an access + refresh pair
+    ↓
+Access token lives in memory; refresh token persists and survives reloads
 ```
+
+The access token is short-lived and never written down — it is the credential
+every request carries. Only the refresh token is stored, and it rotates: each
+use mints a successor and spends the old one, so a stolen token works once and
+its reuse burns the session server-side.
 
 ## Quick Start
 
@@ -78,6 +85,8 @@ Wraps your app and manages the authentication state. Must be at the top of your 
   secretKey="sk_live_..."          // optional, for client-side JWT verification
   tokenParam="token"               // query param to read (default: "token")
   afterSignOutPath="/"             // redirect after sign out (default: "/")
+  storage={customStorage}          // where the refresh token lives (default: localStorage)
+  refreshSkew={60}                 // renew this many seconds before expiry
 >
   {children}
 </ClowkProvider>
@@ -85,9 +94,17 @@ Wraps your app and manages the authentication state. Must be at the top of your 
 
 **What it does on mount:**
 1. Checks the URL for `?token=...`
-2. If found, removes it from the URL (no page reload)
-3. Decodes the JWT payload (verifies if `secretKey` is provided)
+2. If found, strips it from the URL and exchanges it for an access + refresh pair
+3. If not, tries to restore the session from the stored refresh token
 4. Makes the user available via context
+
+Step 3 is what makes a reload survivable. The access token only ever lives in
+memory, so without it every refresh of the page would log the user out.
+
+**Storage.** `storage` takes anything with `get`/`set`/`remove`. It defaults to
+`localStorage` in the browser and falls back to memory when there is no
+`window`. A native shell can back it with the Keychain; passing
+`createMemoryStorage()` opts out of persistence entirely.
 
 ### `<SignInButton>`
 
@@ -192,22 +209,44 @@ Pass options to override config:
 const client = useClowk({ apiBaseUrl: 'https://custom.api.dev/v1' })
 ```
 
+### `useGetToken()`
+
+Returns a function that resolves to a currently-valid access token, renewing it
+when it is expired or close to expiring. **This is what you want when calling an
+API.**
+
+```tsx
+import { useGetToken } from '@clowk/react'
+
+function ApiCall() {
+  const getToken = useGetToken()
+
+  const fetchData = async () => {
+    const res = await fetch('/api/data', {
+      headers: { Authorization: `Bearer ${await getToken()}` },
+    })
+    // ...
+  }
+}
+```
+
+Concurrent calls share one renewal. That matters: refresh tokens rotate, so two
+parallel refreshes would spend the same token twice and trip the server's reuse
+detection — logging the user out for making two requests at once.
+
 ### `useToken()`
 
-Returns the raw JWT string. Must be used inside `<ClowkProvider>`.
+Returns the current JWT string, or `null`. This is a **snapshot** — it may
+already be expired by the time a request goes out. Use it to read claims or
+render state, and prefer `useGetToken()` for anything you are about to send.
 
 ```tsx
 import { useToken } from '@clowk/react'
 
-function ApiCall() {
+function TokenDebug() {
   const token = useToken()
 
-  const fetchData = async () => {
-    const res = await fetch('/api/data', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    // ...
-  }
+  return <pre>{token ?? 'signed out'}</pre>
 }
 ```
 

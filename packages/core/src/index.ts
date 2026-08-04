@@ -27,11 +27,20 @@ export { SessionResource } from './sdk/session'
 export { SessionConfigResource } from './sdk/session-config'
 export { SubdomainResource } from './sdk/subdomain'
 export { TokenResource } from './sdk/token'
+export { SessionTokenResource } from './sdk/session-token'
 
 // JWT & Auth utilities
 export { JwtVerifier } from './jwt-verifier'
 export { SubdomainResolver } from './subdomain-resolver'
 export { TokenExtractor } from './token-extractor'
+export { TokenManager, decodeClaims } from './token-manager'
+export type { TokenManagerOptions, TokenManagerState } from './token-manager'
+export {
+  REFRESH_TOKEN_KEY,
+  createLocalStorage,
+  createMemoryStorage,
+  defaultStorage,
+} from './token-storage'
 
 // Types
 export type {
@@ -47,7 +56,9 @@ export type {
   SessionConfig,
   SessionInfo,
   SessionStatus,
+  TokenPair,
   TokenRequest,
+  TokenStorage,
   VerifyResult,
 } from './types'
 

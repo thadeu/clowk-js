@@ -7,6 +7,7 @@ import { SessionResource } from './session'
 import { SessionConfigResource } from './session-config'
 import { SubdomainResource } from './subdomain'
 import { TokenResource } from './token'
+import { SessionTokenResource } from './session-token'
 
 export class ClowkClient {
   private _users?: UserResource
@@ -14,6 +15,7 @@ export class ClowkClient {
   private _sessionConfig?: SessionConfigResource
   private _subdomains?: SubdomainResource
   private _tokens?: TokenResource
+  private _sessionTokens?: SessionTokenResource
   private _http?: HttpClient
 
   private readonly apiBaseUrl: string | null
@@ -44,6 +46,10 @@ export class ClowkClient {
 
   get tokens(): TokenResource {
     return (this._tokens ??= new TokenResource(this))
+  }
+
+  get sessionTokens(): SessionTokenResource {
+    return (this._sessionTokens ??= new SessionTokenResource(this))
   }
 
   async get(path: string, headers?: Record<string, string>): Promise<ClowkResponse> {
