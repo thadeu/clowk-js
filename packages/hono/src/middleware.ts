@@ -117,19 +117,21 @@ export function requireAuth(options?: ClowkMiddlewareOptions): MiddlewareHandler
   const middleware = clowkMiddleware(options)
 
   return async (c, next) => {
-    let proceeded = false
+    let authorized = false
 
-    await middleware(c, async () => {
-      if (!c.get('auth')) {
-        return
-      }
+    // Whether the inner middleware already answered is taken from its return
+    // value, not from `c.res`: reading that getter before a response exists
+    // throws "Context is not finalized", which is precisely the unauthenticated
+    // case this branch is here to handle.
+    const response = await middleware(c, async () => {
+      if (!c.get('auth')) return
 
-      proceeded = true
+      authorized = true
+
       await next()
     })
 
-    if (!proceeded && !c.res.headers.has('content-type')) {
-      return c.json({ error: 'Unauthorized' }, 401)
-    }
+    if (response) return response
+    if (!authorized) return c.json({ error: 'Unauthorized' }, 401)
   }
 }

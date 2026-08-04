@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { SignJWT } from 'jose'
 import { Hono } from 'hono'
 import { configure, resetConfig } from '@clowk/core'
@@ -144,6 +144,66 @@ describe('@clowk/hono middleware', () => {
 
       expect(res.status).toBe(200)
       expect(body.auth.sub).toBe('user_123')
+    })
+
+    it('returns 401 when the token is invalid', async () => {
+      const app = new Hono()
+      app.use('*', requireAuth())
+      app.get('/test', (c) => c.json({ ok: true }))
+
+      const res = await app.request('/test?token=not.a.jwt')
+
+      expect(res.status).toBe(401)
+      expect((await res.json()).error).toBe('Unauthorized')
+    })
+
+    it('does not run the handler when unauthenticated', async () => {
+      let handlerRan = false
+
+      const app = new Hono()
+      app.use('*', requireAuth())
+      app.get('/test', (c) => {
+        handlerRan = true
+
+        return c.json({ ok: true })
+      })
+
+      await app.request('/test')
+
+      expect(handlerRan).toBe(false)
+    })
+
+    // The inner middleware can answer on its own — an inactive session is the
+    // case that exists today. That response has to reach the client instead of
+    // being replaced by a generic 401.
+    it('propagates a short-circuit response from the inner middleware', async () => {
+      const token = await createToken(
+        { sub: 'user_123', session_id: 'clk_session_abc' },
+        { issuer: 'clowk', expiresIn: '1h' },
+      )
+
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          new Response(JSON.stringify({ session: { status: 'revoked' } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        ),
+      )
+
+      configure({ subdomainUrl: 'https://acme.clowk.dev' })
+
+      const app = new Hono()
+      app.use('*', requireAuth({ secretKey: SECRET_KEY, enforceActiveSession: true }))
+      app.get('/test', (c) => c.json({ ok: true }))
+
+      const res = await app.request(`/test?token=${token}`)
+
+      expect(res.status).toBe(401)
+      expect((await res.json()).error).toBe('Session expired or inactive')
+
+      vi.unstubAllGlobals()
     })
   })
 })
