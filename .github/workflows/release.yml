@@ -1,0 +1,62 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# Two pushes landing close together would otherwise race to open the same
+# version PR or publish the same tarball.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Version or publish
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+      # Required for npm provenance: the registry checks this token to attest
+      # the tarball really came from this workflow.
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Changesets needs history to work out what changed since the last
+          # release; a shallow clone makes it guess wrong.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm build
+
+      # Publishing something that does not pass its own suite is not worth the
+      # convenience of an automated release.
+      - run: pnpm test
+
+      - run: pnpm typecheck
+
+      - name: Create version PR or publish
+        uses: changesets/action@v1
+        with:
+          # With pending changesets this opens a "Version Packages" PR. Merging
+          # that PR removes them, so the next run takes the publish path.
+          version: pnpm changeset version
+          publish: pnpm changeset publish
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
