@@ -21,6 +21,16 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thadeu/clowk-js.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/thadeu/clowk-js/tree/main/packages/react#readme",
+  "bugs": {
+    "url": "https://github.com/thadeu/clowk-js/issues"
+  },
+  "license": "MIT",
   "scripts": {
     "build": "tsup",
     "test": "vitest run",

@@ -21,6 +21,16 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thadeu/clowk-js.git",
+    "directory": "packages/express"
+  },
+  "homepage": "https://github.com/thadeu/clowk-js/tree/main/packages/express#readme",
+  "bugs": {
+    "url": "https://github.com/thadeu/clowk-js/issues"
+  },
+  "license": "MIT",
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
