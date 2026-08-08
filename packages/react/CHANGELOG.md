@@ -1,5 +1,12 @@
 # @clowk/react
 
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [a12ba6a]
+  - @clowk/core@1.2.0
+
 ## 1.1.1
 
 ### Patch Changes
