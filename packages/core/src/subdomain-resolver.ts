@@ -78,13 +78,23 @@ export class SubdomainResolver {
     this.subdomainUrl = options?.subdomainUrl ?? config.subdomainUrl;
   }
 
+  /**
+   * A configured URL wins over a lookup.
+   *
+   * The other order was the one to have if a publishable key were more
+   * trustworthy than a setting, and it is not: `subdomainUrl` is stated by
+   * whoever runs the app, and stating it and then being ignored is the kind of
+   * surprise that costs an afternoon. It also means the network hop only
+   * happens when there is nothing else to go on — which is what makes the
+   * setting optional rather than pointless.
+   */
   async resolveUrl(): Promise<string> {
-    if (this.publishableKey) {
-      return this.resolveFromKey(this.publishableKey);
-    }
-
     if (this.subdomainUrl) {
       return normalizeUrl(this.subdomainUrl);
+    }
+
+    if (this.publishableKey) {
+      return this.resolveFromKey(this.publishableKey);
     }
 
     throw new ConfigurationError('set publishableKey or subdomainUrl to build Clowk URLs');

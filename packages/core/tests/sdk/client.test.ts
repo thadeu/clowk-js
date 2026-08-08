@@ -6,6 +6,8 @@ import { SessionResource } from '../../src/sdk/session'
 import { SubdomainResource } from '../../src/sdk/subdomain'
 import { TokenResource } from '../../src/sdk/token'
 import { configure, resetConfig } from '../../src/config'
+import { SubdomainResolver } from '../../src/subdomain-resolver'
+import { ConfigurationError } from '../../src/errors'
 
 const BASE_URL = 'https://api.clowk.dev/api/v1'
 
@@ -153,5 +155,80 @@ describe('ClowkClient', () => {
     const response = await client.options('custom/endpoint')
 
     expect(response.status).toBe(200)
+  })
+})
+
+/**
+ * A browser app ships a publishable key and nothing else. Requiring it to also
+ * carry `subdomainUrl` means one more variable in every deployment, set to a
+ * value the key can already produce.
+ */
+describe('ClowkClient without a subdomainUrl', () => {
+  beforeEach(() => {
+    resetConfig()
+    SubdomainResolver.clearCache()
+    nock.cleanAll()
+  })
+
+  afterEach(() => {
+    nock.cleanAll()
+  })
+
+  it('resolves its base URL from the publishable key', async () => {
+    configure({ publishableKey: 'pk_test_123' })
+
+    nock(BASE_URL)
+      .get('/instances/search')
+      .query({ query: 'publishable_key:pk_test_123' })
+      .reply(200, { instance: { url: 'https://myapp.clowk.dev' } })
+
+    nock('https://myapp.clowk.dev/api/v1').post('/sessions/refresh').reply(200, {
+      access_token: 'at',
+      refresh_token: 'rt',
+    })
+
+    const client = new ClowkClient()
+    const response = await client.post('sessions/refresh', { refresh_token: 'rt' })
+
+    expect(response.status).toBe(200)
+  })
+
+  // Several requests firing at once share one lookup rather than racing to make
+  // the same call — an app that opens with four queries would otherwise ask
+  // api.clowk.dev four times before answering any of them.
+  it('looks the instance up once', async () => {
+    configure({ publishableKey: 'pk_test_123' })
+
+    const lookup = nock(BASE_URL)
+      .get('/instances/search')
+      .query({ query: 'publishable_key:pk_test_123' })
+      .once()
+      .reply(200, { instance: { url: 'https://myapp.clowk.dev' } })
+
+    nock('https://myapp.clowk.dev/api/v1').get('/users/me').times(3).reply(200, {})
+
+    const client = new ClowkClient()
+    await Promise.all([client.get('users/me'), client.get('users/me'), client.get('users/me')])
+
+    expect(lookup.isDone()).toBe(true)
+  })
+
+  // A configured URL is stated by whoever runs the app. Being ignored in favour
+  // of a lookup is the kind of surprise that costs an afternoon.
+  it('prefers a configured subdomainUrl over the lookup', async () => {
+    configure({ publishableKey: 'pk_test_123', subdomainUrl: 'https://direct.clowk.dev' })
+
+    nock('https://direct.clowk.dev/api/v1').get('/users/me').reply(200, {})
+
+    const client = new ClowkClient()
+    const response = await client.get('users/me')
+
+    expect(response.status).toBe(200)
+  })
+
+  it('says what is missing when it has neither', async () => {
+    const client = new ClowkClient()
+
+    await expect(client.get('users/me')).rejects.toThrow(ConfigurationError)
   })
 })
