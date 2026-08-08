@@ -1,6 +1,6 @@
 {
   "name": "@clowk/nextjs",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Next.js integration for Clowk authentication",
   "type": "module",
   "main": "./dist/index.cjs",

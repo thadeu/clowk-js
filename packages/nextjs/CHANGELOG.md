@@ -1,5 +1,13 @@
 # @clowk/nextjs
 
+## 1.0.5
+
+### Patch Changes
+
+- Updated dependencies [a12ba6a]
+  - @clowk/core@1.2.0
+  - @clowk/react@1.1.2
+
 ## 1.0.4
 
 ### Patch Changes
