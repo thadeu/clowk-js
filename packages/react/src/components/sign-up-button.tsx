@@ -24,8 +24,8 @@ export function SignUpButton({
         const redirect = redirectUri ?? `${window.location.origin}${config.callbackPath}`
         const signUpUrl = `${baseUrl}/sign-up?redirect_uri=${encodeURIComponent(redirect)}`
         setUrl(signUpUrl)
-      } catch {
-        // Cannot resolve URL
+      } catch (error) {
+        console.error('[clowk] could not resolve the sign-up URL, the button stays disabled', error)
       }
     }
 

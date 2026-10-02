@@ -20,8 +20,8 @@ export function SignInButton({ children = 'Sign In', redirectUri, publishableKey
         const signInUrl = `${baseUrl}/sign-in?redirect_uri=${encodeURIComponent(redirect)}`;
 
         setUrl(signInUrl);
-      } catch {
-        // Cannot resolve URL — button stays non-functional
+      } catch (error) {
+        console.error('[clowk] could not resolve the sign-in URL, the button stays disabled', error);
       }
     };
 

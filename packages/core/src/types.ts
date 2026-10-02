@@ -94,7 +94,7 @@ export interface TokenRequest {
   cookies?: Record<string, string>
 }
 
-export type SessionStatus = 'active' | 'revoked' | 'expired' | 'not_found' | 'unknown'
+export type SessionStatus = 'active' | 'revoked' | 'expired' | 'not_found' | 'maintenance' | 'unknown'
 
 export interface SessionInfo {
   status: SessionStatus
