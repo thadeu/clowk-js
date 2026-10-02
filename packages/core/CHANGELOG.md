@@ -1,5 +1,11 @@
 # @clowk/core
 
+## 1.2.1
+
+### Patch Changes
+
+- 7bc801c: `SessionStatus` now includes `'maintenance'`. Clowk reports it from `tokens/verify` while an instance is in maintenance mode, and the session is not active until the mode is turned off.
+
 ## 1.2.0
 
 ### Minor Changes

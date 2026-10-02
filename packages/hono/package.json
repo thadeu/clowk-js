@@ -1,6 +1,6 @@
 {
   "name": "@clowk/hono",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Hono middleware for Clowk authentication",
   "type": "module",
   "main": "./dist/index.cjs",
