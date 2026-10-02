@@ -1,5 +1,13 @@
 # @clowk/react
 
+## 1.1.3
+
+### Patch Changes
+
+- 7bc801c: `SignInButton` and `SignUpButton` now log an error when the sign-in or sign-up URL cannot be resolved, instead of failing silently and leaving a disabled button with no explanation.
+- Updated dependencies [7bc801c]
+  - @clowk/core@1.2.1
+
 ## 1.1.2
 
 ### Patch Changes
